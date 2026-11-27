@@ -1,6 +1,7 @@
 /**
- * Optional Pro capabilities. Every flag stays off at launch.
- * There is no paywall, no upgrade prompt, and no ad slot.
+ * Optional Pro capabilities. Every flag stays off.
+ * There is no paywall and no upgrade prompt.
+ * Removing ads is reserved for a future Pro purchase (`adsEnabled` in src/config/ads.ts).
  * A later release can flip a flag and mount its screen without rearranging the free app.
  */
 export const PRO_FEATURES = {

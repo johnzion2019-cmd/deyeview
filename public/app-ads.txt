@@ -1,0 +1,5 @@
+# Placeholder for Google AdMob app-ads.txt.
+# After you create an AdMob account, replace this file with the line AdMob gives you, for example:
+# google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
+# Host it at the site root: https://deyeview.onrender.com/app-ads.txt
+# Do not publish a real publisher id here until the account exists.

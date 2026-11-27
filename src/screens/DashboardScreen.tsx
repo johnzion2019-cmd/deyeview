@@ -1,4 +1,6 @@
 import { Settings } from "lucide-react";
+import { useCallback, useState } from "react";
+import { DashboardAdBanner } from "@/components/DashboardAdBanner";
 import { EnergyFlow } from "@/components/EnergyFlow";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { formatKwh, formatMoney, formatPower } from "@/domain/format";
@@ -10,7 +12,6 @@ import { shareCsv } from "@/platform/export-report";
 import { haptic } from "@/platform/native";
 import { useDashboard } from "@/state/useDashboard";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
 
 export function DashboardScreen({
   profile,
@@ -27,6 +28,8 @@ export function DashboardScreen({
   const [span, setSpan] = useState<"day" | "month">("day");
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [adReservePx, setAdReservePx] = useState(0);
+  const onAdReserve = useCallback((px: number) => setAdReservePx(px), []);
 
   async function setScene(scene: SceneMode) {
     await haptic("light");
@@ -49,7 +52,7 @@ export function DashboardScreen({
   }
 
   return (
-    <div className="flex min-h-dvh flex-col">
+    <div className="flex h-dvh min-h-0 flex-col">
       <header className="flex items-start justify-between gap-3 px-5 pt-[max(0.85rem,env(safe-area-inset-top))]">
         <div className="min-w-0">
           <p className="text-xs uppercase tracking-[0.16em] text-muted">{profile.city || "Your plant"}</p>
@@ -71,7 +74,7 @@ export function DashboardScreen({
         </div>
       ) : null}
       <PullToRefresh onRefresh={refreshNow}>
-        <div className="space-y-4 px-5 py-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+        <div className={`space-y-4 px-5 py-4 ${adReservePx > 0 ? "pb-4" : "pb-[max(1.5rem,env(safe-area-inset-bottom))]"}`}>
           {loading && !model ? <p className="py-16 text-center text-sm text-muted">Reading the roof…</p> : null}
           {error ? (
             <div className="rounded-3xl bg-clay/15 px-4 py-3 text-sm text-clay">
@@ -199,6 +202,7 @@ export function DashboardScreen({
           ) : null}
         </div>
       </PullToRefresh>
+      <DashboardAdBanner reservePx={adReservePx} onReserve={onAdReserve} />
     </div>
   );
 }

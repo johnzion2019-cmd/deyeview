@@ -4,4 +4,6 @@
     <string name="title_activity_main">DeyeView</string>
     <string name="package_name">com.deyeview.app</string>
     <string name="custom_url_scheme">com.deyeview.app</string>
+    <!-- Google's official test app id. Paste the real Android app id here, or set VITE_ADMOB_ANDROID_APP_ID. See src/config/ads.ts. -->
+    <string name="admob_app_id">ca-app-pub-3940256099942544~3347511713</string>
 </resources>
