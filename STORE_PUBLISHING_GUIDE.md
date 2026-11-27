@@ -1,0 +1,189 @@
+# DeyeView store publishing guide
+
+DeyeView `1.0.0` (`com.deyeview.app`) is a Capacitor app. The phone talks to Deye Cloud and Open-Meteo directly. There is no DeyeView account server. Replace `support@deyeview.app` with a mailbox you actually read before you submit.
+
+Host these files at stable HTTPS URLs and paste those URLs into both consoles:
+
+| Page | File | Suggested path |
+| --- | --- | --- |
+| Privacy Policy | `public/privacy.html` | `/privacy.html` |
+| Terms of Use | `public/terms.html` | `/terms.html` |
+| Support | `public/support.html` | `/support.html` |
+
+Google’s data-deletion URL can be the privacy page anchor `/privacy.html#delete`. The same steps are on the support page.
+
+## Reviewer path (both stores)
+
+The app does not require a Deye inverter.
+
+1. Install the build and open it.
+2. Tap **Try Live Demo**.
+3. Confirm the energy-flow hero, battery runtime, Day / Month savings, 30-day chart, records strip, payback tracker, today/tomorrow forecast, and **Export CSV report**.
+4. Open Settings and the Privacy, Terms, and Support pages.
+5. **Disconnect & Clear Local Data** returns the app to the welcome screen. That is the in-app deletion control.
+6. Optional: **Connect My Deye Inverter** shows the real setup form. Reviewers without a Deye developer app should stop at Demo Mode. The pill **Demo Mode · Connect Inverter** stays on screen while the simulation is running.
+
+Put that list in App Review notes and in the Play Console testing instructions.
+
+## Google Play Console
+
+### App identity
+
+- App name: DeyeView
+- Package name: `com.deyeview.app`
+- Default language: English
+- App category: Tools (or House & Home)
+- Free, no ads, no in-app products at launch
+
+Short description:
+
+> Live solar, battery, and savings for your Deye hybrid inverter.
+
+Full description:
+
+> DeyeView is a private companion for Deye hybrid inverter owners. See PV, grid, battery, and home load on one screen, with state of charge, time to reserve or to full, day and month savings in your currency, a 30-day history, best-day records, a payback tracker, and a today/tomorrow generation forecast.
+>
+> Connect with the Deye Cloud Open API (EMEA/APAC or Americas). Your App ID, App Secret, and password stay on this phone and are sent only to Deye Cloud. There is no DeyeView account.
+>
+> New here, or reviewing the app? Try Live Demo runs every feature without an inverter. DeyeView is free at launch and shows no ads. It is an independent app and is not affiliated with Ningbo Deye Inverter Technology Co., Ltd.
+
+### Closed testing (14 days)
+
+Personal Play developer accounts created after November 2023 must pass a closed test before production access. Organization accounts are often exempt. If the console asks for the test, do all of the following before you apply for production:
+
+- Create a closed testing release and roll it out.
+- Add at least 12 testers who opt in.
+- Keep the release installed and available for 14 consecutive days.
+- Testers should open Demo Mode, export a CSV, and open Settings at least once so the release is actually used.
+- Do not pause the track or drop below 12 opted-in testers during the 14 days.
+- After the console shows the requirement as met, apply for production access, then promote the same artifact.
+
+### Data safety
+
+Answer from what the app actually does. Credentials are stored on the device and also sent to Deye Cloud. Coordinates are sent to Open-Meteo. DeyeView itself has no backend.
+
+| Question | Answer |
+| --- | --- |
+| Does the app collect or share any of the required user data types? | Yes |
+| Is all of the collected user data encrypted in transit? | Yes (HTTPS only) |
+| Do you provide a way for users to request that their data is deleted? | Yes. In-app **Disconnect & Clear Local Data**. We do not retain a copy. Link `/privacy.html#delete`. |
+| Email address | Collected and shared with Deye Cloud. Purpose: App functionality. Not sold. Not used for tracking. |
+| Approximate location | User-entered latitude and longitude, shared with Open-Meteo for the forecast. Purpose: App functionality. |
+| Device or other IDs | Inverter serial number, shared with Deye Cloud. Purpose: App functionality. |
+| Photos | Optional house photo. Collected on device only. Not shared. |
+| Financial info | Tariff and install cost stay on the device. Do not declare them as collected. |
+| Ads, analytics, tracking | No |
+
+Account creation: users may sign in to their existing Deye Cloud account from the app. DeyeView does not create its own account.
+
+### Signing secrets
+
+Create an upload keystore once and store it outside the repo:
+
+```bash
+keytool -genkeypair -v \
+  -keystore deyeview-upload.keystore \
+  -alias deyeview \
+  -keyalg RSA -keysize 2048 -validity 10000
+```
+
+GitHub Actions repository secrets:
+
+| Secret | Value |
+| --- | --- |
+| `ANDROID_KEYSTORE_BASE64` | `base64 -w 0 deyeview-upload.keystore` (macOS: `base64 < deyeview-upload.keystore`) |
+| `ANDROID_KEYSTORE_PASSWORD` | Keystore password |
+| `ANDROID_KEY_ALIAS` | `deyeview` |
+| `ANDROID_KEY_PASSWORD` | Key password |
+
+`.github/workflows/android-build.yml` always builds a debug APK. When `ANDROID_KEYSTORE_BASE64` is set it also builds a signed release AAB. Play App Signing should stay enabled; upload the AAB and let Google hold the app signing key. Enroll in Play App Signing on the first production upload and keep the upload keystore backup offline.
+
+Local equivalent:
+
+```bash
+export ANDROID_KEYSTORE_PATH="$PWD/deyeview-upload.keystore"
+export ANDROID_KEYSTORE_PASSWORD="…"
+export ANDROID_KEY_ALIAS="deyeview"
+export ANDROID_KEY_PASSWORD="…"
+cd android && ./gradlew bundleRelease
+```
+
+The release signing block in `android/app/build.gradle` is skipped when `ANDROID_KEYSTORE_PATH` is unset, so debug builds and CI without secrets still assemble.
+
+### Listing assets
+
+- App icon: `public/icon-512.png` (the Android project uses the generated adaptive icons).
+- Feature graphic: 1024×500, deep green `#12352c` with the sun-and-roof mark.
+- Phone screenshots: at least two. Capture welcome and Demo Mode on a phone. The in-app house hero is the screenshot.
+- Content rating: questionnaire, no violence, no user-generated public content, no ads.
+- Target audience: 18 and older. Not a children’s app.
+- News app declaration: No. Government app: No. COVID-19 contact status: No.
+
+## App Store Connect
+
+### Identity
+
+- Name: DeyeView
+- Bundle ID: `com.deyeview.app`
+- SKU: `deyeview-ios`
+- Primary category: Utilities
+- Price: Free
+- Age rating: 4+
+
+Subtitle:
+
+> Solar, battery, and savings
+
+Promotional text:
+
+> Try Live Demo if you want the whole dashboard before you connect a Deye inverter.
+
+Description: use the Play full description above. Keywords (100 characters, no “Deye” stuffing beyond what is accurate):
+
+> solar,inverter,battery,hybrid,energy,savings,forecast,pv,soc
+
+### App Privacy
+
+Data is not used to track the user. Data is not used for third-party advertising.
+
+| Data type | Linked to the user | Tracking | Purpose |
+| --- | --- | --- | --- |
+| Contact Info → Email Address | Yes (it is the Deye account email) | No | App Functionality |
+| Location → Coarse Location | Yes | No | App Functionality |
+| Identifiers → Other (inverter serial) | Yes | No | App Functionality |
+
+Do not declare photos, payment info, or diagnostics. The house photo and tariff never leave the device. If the nutrition-label questionnaire offers “Data Not Collected” only when nothing is transmitted, do not pick that: email, serial, and coordinates are transmitted to Deye Cloud or Open-Meteo.
+
+Privacy Policy URL: your hosted `/privacy.html`. Support URL: your hosted `/support.html`.
+
+Encryption: the app only uses HTTPS. In Info.plist, `ITSAppUsesNonExemptEncryption` is false, so you can answer “No” to the export-compliance question on each build.
+
+Photo library: the connect flow can set a house photo. `NSPhotoLibraryUsageDescription` and `NSCameraUsageDescription` explain that. The photo is optional.
+
+### Reviewer notes
+
+Paste:
+
+> No inverter is required. On the welcome screen tap Try Live Demo. Every feature works, including CSV share and Settings → Disconnect & Clear Local Data. Demo Mode · Connect Inverter opens the real Deye Cloud form for owners; reviewers can ignore it. DeyeView does not have a username we can issue. The app is an independent client of the customer’s own Deye Cloud account and is not affiliated with Deye.
+
+Sign in with a development Apple ID, enable automatic signing for the App target, archive in Xcode (Any iOS Device), and upload with the Organizer or `xcodebuild -exportArchive`. The GitHub workflow `.github/workflows/ios-build.yml` produces an unsigned Release build on a macOS runner so the project compiles before you attach a team.
+
+### What to verify on a device
+
+- Welcome offers Connect and Try Live Demo.
+- Demo numbers move, the refresh countdown reaches zero and reloads, and pull-to-refresh works.
+- Auto / Day / Night changes the house. A photo replaces the built-in art.
+- CSV opens the system share sheet.
+- Disconnect returns to the welcome screen and a fresh launch does not restore the old login.
+
+## Build locally
+
+```bash
+npm install
+npm run typecheck
+npm test
+npm run build
+npx cap sync
+```
+
+Android Studio: open `android/`. Xcode: open `ios/App/App.xcworkspace` after `cap sync` has installed CocoaPods on a Mac.

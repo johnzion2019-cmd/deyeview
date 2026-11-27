@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Support · DeyeView</title>
+    <style>
+      body { margin: 0; font-family: Georgia, "Iowan Old Style", serif; background: #f6f1e7; color: #1c2b24; }
+      main { max-width: 42rem; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+      a { color: #0f6b45; }
+      h1 { font-weight: 500; font-size: 2.4rem; margin-bottom: 0.25rem; }
+      h2 { font-weight: 500; font-size: 1.35rem; margin-top: 2rem; }
+      p, li { line-height: 1.55; font-family: "Segoe UI", sans-serif; }
+      .meta { color: #5c6b63; font-family: "Segoe UI", sans-serif; }
+      code { font-family: ui-monospace, monospace; font-size: 0.92em; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="meta"><a href="./">DeyeView</a></p>
+      <h1>Support</h1>
+      <p>Email <a href="mailto:support@deyeview.app">support@deyeview.app</a>. Include your phone model, app version (Settings, at the bottom), and whether you are in Demo Mode or connected. Do not send your App Secret or password.</p>
+      <h2>Store review and Demo Mode</h2>
+      <p>DeyeView opens with two choices. <strong>Try Live Demo</strong> runs a full plant on the device: a ticking energy flow, battery runtime, day and month savings, 30-day history, records, payback, a solar forecast, CSV export, and Settings. No inverter and no Deye account are required. A “Demo Mode · Connect Inverter” pill stays visible until a real inverter is connected.</p>
+      <h2>Connect a Deye inverter</h2>
+      <ol>
+        <li>Create or open the Deye Cloud account you already use in the Deye app, and note whether it lives in the EU or US datacenter.</li>
+        <li>At <a href="https://developer.deyecloud.com/app">developer.deyecloud.com</a>, create an application and copy the App ID and App Secret.</li>
+        <li>In DeyeView, choose Connect My Deye Inverter. Pick EMEA / APAC (<code>eu1-developer.deyecloud.com</code>) or Americas (<code>us1-developer.deyecloud.com</code>).</li>
+        <li>Enter the App ID, App Secret, Deye email, password, and inverter serial number, then the tariff, battery, and location. Test &amp; connect signs in from the phone.</li>
+      </ol>
+      <p>The password is SHA-256 hashed on the device before it is sent. A 64-character hex digest pasted from another tool is sent unchanged. Credentials are not stored on a DeyeView server.</p>
+      <h2 id="delete">Delete data from this phone</h2>
+      <p>Open Settings and tap <strong>Disconnect &amp; Clear Local Data</strong>. That is the deletion control for Apple and Google data-deletion requirements. DeyeView does not keep an account that support staff can erase remotely. To close the Deye Cloud account itself, use Deye’s own process.</p>
+      <h2>Forecast</h2>
+      <p>Today and tomorrow’s estimated kWh come from Open-Meteo shortwave radiation for the coordinates you enter, scaled to the inverter’s rated power. If the weather service cannot be reached, DeyeView shows a clearly labeled on-device estimate.</p>
+    </main>
+  </body>
+</html>
