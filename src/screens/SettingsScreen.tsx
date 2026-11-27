@@ -68,6 +68,10 @@ export function SettingsScreen({
           <LegalLink href="/privacy.html" title="Privacy Policy" />
           <LegalLink href="/terms.html" title="Terms of Use" />
           <LegalLink href="/support.html" title="Support" />
+          <a href="mailto:johnzion2019@gmail.com" className="flex items-center justify-between rounded-2xl bg-panel px-4 py-3 text-sm ring-1 ring-white/10">
+            johnzion2019@gmail.com
+            <span className="text-muted">Email</span>
+          </a>
         </section>
         {isProEnabled("pdfExport") ? <p className="text-sm text-muted">PDF export is part of a future optional Pro pack.</p> : null}
         <section className="space-y-3 rounded-3xl bg-panel p-4 ring-1 ring-white/10">

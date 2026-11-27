@@ -1,6 +1,6 @@
 # DeyeView store publishing guide
 
-DeyeView `1.0.0` (`com.deyeview.app`) is a Capacitor app. The phone talks to Deye Cloud and Open-Meteo directly. There is no DeyeView account server. Replace `support@deyeview.app` with a mailbox you actually read before you submit.
+DeyeView `1.0.0` (`com.deyeview.app`) is a Capacitor app. The phone talks to Deye Cloud and Open-Meteo directly. There is no DeyeView account server. Support mail is [johnzion2019@gmail.com](mailto:johnzion2019@gmail.com).
 
 Host these files at stable HTTPS URLs and paste those URLs into both consoles:
 
