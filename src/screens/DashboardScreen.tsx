@@ -3,7 +3,8 @@ import { useCallback, useState } from "react";
 import { DashboardAdBanner } from "@/components/DashboardAdBanner";
 import { EnergyFlow } from "@/components/EnergyFlow";
 import { PullToRefresh } from "@/components/PullToRefresh";
-import { formatKwh, formatMoney, formatPower } from "@/domain/format";
+import { formatBatteryPower } from "@/domain/battery";
+import { formatKwh, formatMoney } from "@/domain/format";
 import { paybackProgressLabel } from "@/domain/payback";
 import type { PlantProfile, SceneMode } from "@/domain/types";
 import { csvFilename, buildEarningsCsv } from "@/domain/csv";
@@ -100,7 +101,7 @@ export function DashboardScreen({
                     <p className="text-xs uppercase tracking-[0.14em] text-muted">Battery</p>
                     <p className="font-display text-[1.65rem] leading-tight">{model.runtime.label}</p>
                     <p className="mt-1 text-sm text-muted">
-                      {formatKwh(model.runtime.remainingKwh)} kWh above {Math.round(model.runtime.reserveSoc)}% · {formatPower(model.sample.batteryW)}
+                      {formatKwh(model.runtime.remainingKwh)} kWh above {Math.round(model.runtime.reserveSoc)}% · {formatBatteryPower(model.sample.batteryW)}
                     </p>
                   </div>
                 </div>

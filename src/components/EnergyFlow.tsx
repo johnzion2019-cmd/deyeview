@@ -2,7 +2,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import { BatteryCharging, House, SunMedium, UtilityPole } from "lucide-react";
 import { HouseArt } from "@/components/HouseArt";
 import type { HeroPeriod } from "@/domain/hero";
-import { formatPower, formatSoc } from "@/domain/format";
+import { batteryFlowLabel, formatBatteryChip } from "@/domain/battery";
+import { formatPower } from "@/domain/format";
 import type { Sample, SceneMode } from "@/domain/types";
 import { cn } from "@/lib/cn";
 
@@ -71,7 +72,8 @@ export function EnergyFlow({ sample, hero, scene, photo, showcase, onScene }: Pr
   const gridExport = "M 198 268 C 230 214, 260 176, 286 128";
   const batteryOut = "M 180 392 C 180 360, 180 330, 180 300";
   const batteryIn = "M 180 300 C 180 330, 180 360, 180 392";
-  const batteryDetail = sample.batteryW < -30 ? "Charging" : sample.batteryW > 30 ? "Discharging" : "Idle";
+  const batteryChip = formatBatteryChip(sample.batteryW, sample.batterySoc);
+  const batteryFlow = batteryChip.state;
   const gridDetail = offGrid ? "Off grid" : sample.gridW < -30 ? "Exporting" : sample.gridW > 30 ? "Importing" : "Idle";
 
   return (
@@ -92,8 +94,8 @@ export function EnergyFlow({ sample, hero, scene, photo, showcase, onScene }: Pr
           {motion && sample.pvW > 25 ? <Particles d={pvToHome} color="#d6f25c" on /> : null}
           {motion && !offGrid && sample.gridW > 30 ? <Particles d={gridImport} color="#9ecbff" on /> : null}
           {motion && !offGrid && sample.gridW < -30 ? <Particles d={gridExport} color="#9ecbff" on /> : null}
-          {motion && sample.batteryW > 30 ? <Particles d={batteryOut} color="#8ed9cb" on /> : null}
-          {motion && sample.batteryW < -30 ? <Particles d={batteryIn} color="#8ed9cb" on /> : null}
+          {motion && batteryFlow === "discharging" ? <Particles d={batteryOut} color="#8ed9cb" on /> : null}
+          {motion && batteryFlow === "charging" ? <Particles d={batteryIn} color="#8ed9cb" on /> : null}
         </svg>
         <div className="absolute left-3 top-3 flex items-center gap-2">
           <span className={cn("rounded-full px-2.5 py-1 text-[11px] font-medium", offGrid ? "bg-clay/90 text-white" : "bg-[#12352c]/80 text-lime")}>
@@ -117,7 +119,7 @@ export function EnergyFlow({ sample, hero, scene, photo, showcase, onScene }: Pr
         <Node className="left-[22%] top-[18%]" label="PV Array" value={formatPower(sample.pvW)} detail="Generating" icon={<SunMedium className="size-3" />} tone="bg-lime/20 text-lime" />
         <Node className="left-[78%] top-[18%]" label="Grid" value={formatPower(Math.abs(sample.gridW))} detail={gridDetail} icon={<UtilityPole className="size-3" />} tone="bg-sky-200/20 text-sky-100" />
         <Node className="left-1/2 top-[52%]" label="Home Load" value={formatPower(sample.loadW)} detail={sample.operatingMode} icon={<House className="size-3" />} tone="bg-marigold/20 text-marigold" />
-        <Node className="left-1/2 top-[78%]" label="Battery" value={formatSoc(sample.batterySoc)} detail={batteryDetail} icon={<BatteryCharging className="size-3" />} tone="bg-tide/20 text-tide" />
+        <Node className="left-1/2 top-[78%]" label={batteryChip.label} value={batteryChip.value} detail={batteryFlow === "idle" ? "Battery" : batteryFlowLabel(batteryFlow)} icon={<BatteryCharging className="size-3" />} tone="bg-tide/20 text-tide" />
       </div>
     </section>
   );
