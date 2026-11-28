@@ -4,7 +4,7 @@ import { cycleStartDayInMonth, cycleWindow } from "@/domain/billing";
 import { batteryFlowState, estimateBatteryRuntime, formatBatteryChip, formatBatteryPower } from "@/domain/battery";
 import { buildEarningsCsv, csvFilename } from "@/domain/csv";
 import { chooseDemoClock, pvPowerW, type SimConfig } from "@/domain/demo";
-import { DeyeClient, dailyEnergyFromDeye, mapMeasurePoints, parseStationHistory, resolveDeyeBaseUrl, sampleFromDeye } from "@/domain/deye";
+import { DeyeClient, dailyEnergyFromDeye, mapMeasurePoints, parseStationHistory, resolveDeyeBaseUrl, sampleFromDeye, stationDailyHistoryRange } from "@/domain/deye";
 import { buildEarningsReport, dayEarnings, selfSuppliedKwh } from "@/domain/earnings";
 import { estimateGenerationKwh } from "@/domain/forecast";
 import { formatMoney } from "@/domain/format";
@@ -240,6 +240,51 @@ describe("demo sun and Deye parsing", () => {
     expect(() => resolveDeyeBaseUrl("custom", "http://eu1-developer.deyecloud.com")).toThrow(/https/);
     expect(() => resolveDeyeBaseUrl("custom", "https://127.0.0.1/v1.0")).toThrow(/public/);
   });
+
+
+  it("prefers DailyActiveProduction for today's PV and ignores lifetime consumption", () => {
+    const daily = dailyEnergyFromDeye(
+      {
+        deviceDataList: [
+          {
+            dataList: [
+              { key: "SOC", value: "59" },
+              { key: "DailyEnergy", value: "2.2" },
+              { key: "DailyProduction", value: "2.2" },
+              { key: "DailyActiveProduction", value: "41.7" },
+              { key: "DailyChargingEnergy", value: "13.6" },
+              { key: "DailyDischargingEnergy", value: "6.4" },
+              { key: "DailyConsumption", value: "34.5" },
+              { key: "TotalConsumption", value: "15475" },
+              { key: "DailyEnergyPurchased", value: "0" },
+              { key: "DailyGridFeedIn", value: "0" },
+            ],
+          },
+        ],
+      },
+      null,
+    );
+    expect(daily).toMatchObject({
+      productionKwh: 41.7,
+      loadKwh: 34.5,
+      chargeKwh: 13.6,
+      dischargeKwh: 6.4,
+      importKwh: 0,
+      exportKwh: 0,
+      socClose: 59,
+    });
+    const sources = daily!.productionKwh + daily!.dischargeKwh + daily!.importKwh;
+    const sinks = daily!.loadKwh + daily!.chargeKwh + daily!.exportKwh;
+    expect(Math.abs(sources - sinks)).toBeLessThan(1);
+  });
+
+  it("ends the daily station history window tomorrow so today is included", () => {
+    const now = Date.UTC(2026, 10, 28, 3, 55, 0);
+    const range = stationDailyHistoryRange(now, "Asia/Manila");
+    expect(range.startAt).toBe("2026-10-31");
+    expect(range.endAt).toBe("2026-11-29");
+  });
+
 
   it("posts the hashed password to the token endpoint", async () => {
     let posted = "";

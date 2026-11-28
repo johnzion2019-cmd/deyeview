@@ -1,4 +1,4 @@
-import { DeyeClient, dailyEnergyFromDeye, energyFromHistoryPoint, parseStationHistory, sampleFromDeye } from "@/domain/deye";
+import { DeyeClient, dailyEnergyFromDeye, energyFromHistoryPoint, parseStationHistory, sampleFromDeye, stationDailyHistoryRange } from "@/domain/deye";
 import { emptyEnergy, mergeEnergyTotals } from "@/domain/integrate";
 import { postDeye } from "@/platform/http";
 import { zonedParts } from "@/domain/time";
@@ -60,9 +60,9 @@ export async function fetchLiveSnapshot(profile: PlantProfile): Promise<LiveResu
   const todayYmd = zonedParts(now, profile.timeZone).ymd;
 
   if (stationId) {
-    const start = zonedParts(now - 29 * 86_400_000, profile.timeZone).ymd;
+    const range = stationDailyHistoryRange(now, profile.timeZone);
     try {
-      const daily = await client.stationHistory(Number(stationId), 2, start, todayYmd);
+      const daily = await client.stationHistory(Number(stationId), 2, range.startAt, range.endAt);
       for (const row of parseStationHistory(daily, 2)) {
         if (row.grain === "day") days[row.period] = energyFromHistoryPoint(row);
       }
