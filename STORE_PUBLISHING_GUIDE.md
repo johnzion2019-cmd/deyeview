@@ -9,8 +9,9 @@ Host these files at stable HTTPS URLs and paste those URLs into both consoles:
 | Privacy Policy | `public/privacy.html` | `/privacy.html` |
 | Terms of Use | `public/terms.html` | `/terms.html` |
 | Support | `public/support.html` | `/support.html` |
+| app-ads.txt | `public/app-ads.txt` | `https://deyeview.onrender.com/app-ads.txt` |
 
-Google’s data-deletion URL can be the privacy page anchor `/privacy.html#delete`. The same steps are on the support page.
+Google’s data-deletion URL can be the privacy page anchor `/privacy.html#delete`. The same steps are on the support page. `app-ads.txt` must be served at the developer website root, [https://deyeview.onrender.com/app-ads.txt](https://deyeview.onrender.com/app-ads.txt), not under a subpath. The committed file is the live AdMob line for publisher `pub-7582636626157081`.
 
 ## Reviewer path (both stores)
 
@@ -19,7 +20,7 @@ The app does not require a Deye inverter.
 1. Install the build and open it.
 2. Tap **Try Live Demo**.
 3. Confirm the energy-flow hero, battery runtime, Day / Month savings, 30-day chart, records strip, payback tracker, today/tomorrow forecast, and **Export CSV report**.
-4. Open Settings and the Privacy, Terms, and Support pages.
+4. Open Settings and the Privacy, Terms, and Support pages. **Privacy & ad choices** explains consent. On a phone build, a Google test banner may sit under the dashboard. It is absent on the welcome screen and in Settings.
 5. **Disconnect & Clear Local Data** returns the app to the welcome screen. That is the in-app deletion control.
 6. Optional: **Connect My Deye Inverter** shows the real setup form. Reviewers without a Deye developer app should stop at Demo Mode. The pill **Demo Mode · Connect Inverter** stays on screen while the simulation is running.
 
@@ -33,7 +34,7 @@ Put that list in App Review notes and in the Play Console testing instructions.
 - Package name: `com.deyeview.app`
 - Default language: English
 - App category: Tools (or House & Home)
-- Free, no ads, no in-app products at launch
+- Free, contains ads, no in-app products at launch
 
 Short description:
 
@@ -45,7 +46,7 @@ Full description:
 >
 > Connect with the Deye Cloud Open API (EMEA/APAC or Americas). Your App ID, App Secret, and password stay on this phone and are sent only to Deye Cloud. There is no DeyeView account.
 >
-> New here, or reviewing the app? Try Live Demo runs every feature without an inverter. DeyeView is free at launch and shows no ads. It is an independent app and is not affiliated with Ningbo Deye Inverter Technology Co., Ltd.
+> New here, or reviewing the app? Try Live Demo runs every feature without an inverter. DeyeView is free. The Android and iOS dashboard may show one Google AdMob banner; the welcome screen and Settings do not. It is an independent app and is not affiliated with Ningbo Deye Inverter Technology Co., Ltd.
 
 ### Closed testing (14 days)
 
@@ -69,10 +70,14 @@ Answer from what the app actually does. Credentials are stored on the device and
 | Do you provide a way for users to request that their data is deleted? | Yes. In-app **Disconnect & Clear Local Data**. We do not retain a copy. Link `/privacy.html#delete`. |
 | Email address | Collected and shared with Deye Cloud. Purpose: App functionality. Not sold. Not used for tracking. |
 | Approximate location | User-entered latitude and longitude, shared with Open-Meteo for the forecast. Purpose: App functionality. |
-| Device or other IDs | Inverter serial number, shared with Deye Cloud. Purpose: App functionality. |
+| Device or other IDs | Inverter serial number, shared with Deye Cloud. Purpose: App functionality. Advertising ID (and, if present, the app set ID), collected and shared with Google AdMob. Purpose: Advertising. Not sold by DeyeView. |
+| Approximate location | User-entered latitude and longitude, shared with Open-Meteo for the forecast. Purpose: App functionality. AdMob may also derive an approximate location from the IP address. Purpose: Advertising. |
 | Photos | Optional house photo. Collected on device only. Not shared. |
 | Financial info | Tariff and install cost stay on the device. Do not declare them as collected. |
-| Ads, analytics, tracking | No |
+| Diagnostics | Crash logs and performance data collected by the Google Mobile Ads SDK and shared with Google. Purpose: Advertising. |
+| Ads | Yes. The app contains ads. Declare **Contains ads**. |
+| Analytics you operate | No first-party analytics SDK. |
+| Tracking | AdMob may use the advertising ID for advertising. On iOS this waits for App Tracking Transparency. If the user declines, requests are non-personalized. |
 
 Account creation: users may sign in to their existing Deye Cloud account from the app. DeyeView does not create its own account.
 
@@ -115,7 +120,7 @@ The release signing block in `android/app/build.gradle` is skipped when `ANDROID
 - App icon: `public/icon-512.png` (the Android project uses the generated adaptive icons).
 - Feature graphic: 1024×500, deep green `#12352c` with the sun-and-roof mark.
 - Phone screenshots: at least two. Capture welcome and Demo Mode on a phone. The in-app house hero is the screenshot.
-- Content rating: questionnaire, no violence, no user-generated public content, no ads.
+- Content rating: questionnaire, no violence, no user-generated public content. Answer **yes** to ads. The banner is a standard AdMob unit, not an age-restricted creative.
 - Target audience: 18 and older. Not a children’s app.
 - News app declaration: No. Government app: No. COVID-19 contact status: No.
 
@@ -144,15 +149,20 @@ Description: use the Play full description above. Keywords (100 characters, no �
 
 ### App Privacy
 
-Data is not used to track the user. Data is not used for third-party advertising.
+Email, the inverter serial, and the coordinates the user types are used for app functionality and are not used to track the user. The dashboard banner adds third-party advertising. Tracking is limited to the advertising identifier when the user allows App Tracking Transparency. Declining that prompt, or declining personalized ads in Google’s consent form, makes the ad request non-personalized.
 
 | Data type | Linked to the user | Tracking | Purpose |
 | --- | --- | --- | --- |
 | Contact Info → Email Address | Yes (it is the Deye account email) | No | App Functionality |
-| Location → Coarse Location | Yes | No | App Functionality |
+| Location → Coarse Location | Yes | No | App Functionality (the coordinates the user enters, sent to Open-Meteo). Also declare coarse location for Third-Party Advertising because AdMob may infer an approximate location. |
+| Identifiers → Device ID | No | Yes, if ATT is allowed | Third-Party Advertising |
 | Identifiers → Other (inverter serial) | Yes | No | App Functionality |
+| Diagnostics → Crash Data | No | No | Third-Party Advertising |
+| Diagnostics → Performance Data | No | No | Third-Party Advertising |
 
-Do not declare photos, payment info, or diagnostics. The house photo and tariff never leave the device. If the nutrition-label questionnaire offers “Data Not Collected” only when nothing is transmitted, do not pick that: email, serial, and coordinates are transmitted to Deye Cloud or Open-Meteo.
+Do not declare photos or payment info. The house photo and tariff never leave the device. Do not pick “Data Not Collected”: email, serial, and coordinates are transmitted, and AdMob receives advertising identifiers.
+
+`NSUserTrackingUsageDescription` is set. The prompt is requested on the dashboard before a banner load, after the Google UMP form when that form is required. `PrivacyInfo.xcprivacy` marks tracking on and lists the Google ad domains.
 
 Privacy Policy URL: your hosted `/privacy.html`. Support URL: your hosted `/support.html`.
 
@@ -164,17 +174,66 @@ Photo library: the connect flow can set a house photo. `NSPhotoLibraryUsageDescr
 
 Paste:
 
-> No inverter is required. On the welcome screen tap Try Live Demo. Every feature works, including CSV share and Settings → Disconnect & Clear Local Data. Demo Mode · Connect Inverter opens the real Deye Cloud form for owners; reviewers can ignore it. DeyeView does not have a username we can issue. The app is an independent client of the customer’s own Deye Cloud account and is not affiliated with Deye.
+> No inverter is required. On the welcome screen tap Try Live Demo. Every feature works, including CSV share and Settings → Disconnect & Clear Local Data. A banner may appear at the bottom of the dashboard only. It is not on the welcome screen or in Settings. Debug installs show a Google test ad. Release installs request the live Dashboard banner. Settings → Privacy & ad choices reopens Google’s consent form when one is available. Demo Mode · Connect Inverter opens the real Deye Cloud form for owners; reviewers can ignore it. DeyeView does not have a username we can issue. The app is an independent client of the customer’s own Deye Cloud account and is not affiliated with Deye.
 
 Sign in with a development Apple ID, enable automatic signing for the App target, archive in Xcode (Any iOS Device), and upload with the Organizer or `xcodebuild -exportArchive`. The GitHub workflow `.github/workflows/ios-build.yml` produces an unsigned Release build on a macOS runner so the project compiles before you attach a team.
 
 ### What to verify on a device
 
 - Welcome offers Connect and Try Live Demo.
-- Demo numbers move, the refresh countdown reaches zero and reloads, and pull-to-refresh works.
+- Demo numbers move, the refresh countdown reaches zero and reloads, and pull-to-refresh works. The banner, when it loads, sits under the scrolling dashboard and does not cover the energy-flow hero or the pull-to-refresh control. Turning the phone offline, or a no-fill response, removes the gap.
 - Auto / Day / Night changes the house. A photo replaces the built-in art.
 - CSV opens the system share sheet.
 - Disconnect returns to the welcome screen and a fresh launch does not restore the old login.
+
+## AdMob
+
+Publisher `pub-7582636626157081`. Both native apps are `com.deyeview.app`. The live banner ad unit on each platform is named **Dashboard banner**. Web preview, the welcome screen, and Settings never request an ad.
+
+| Slot | Where it lives | Release value |
+| --- | --- | --- |
+| Android app id | `src/config/ads.ts`, copied into `android/app/src/main/res/values/strings.xml` (`admob_app_id`) and referenced from `AndroidManifest.xml` | `ca-app-pub-7582636626157081~3112060012` |
+| iOS app id | `src/config/ads.ts`, copied into `ios/App/App/Info.plist` `GADApplicationIdentifier` | `ca-app-pub-7582636626157081~3902397504` |
+| Android banner | `src/config/ads.ts` | `ca-app-pub-7582636626157081/2423608964` |
+| iOS banner | `src/config/ads.ts` | `ca-app-pub-7582636626157081/8543836741` |
+| app-ads.txt | `public/app-ads.txt`, served at the site root | `google.com, pub-7582636626157081, DIRECT, f08c47fec0942fa0` |
+
+`npm run build` writes the app ids from `PRODUCTION_APP_IDS` unless `VITE_ADMOB_ANDROID_APP_ID` or `VITE_ADMOB_IOS_APP_ID` is set. Banner overrides are `VITE_ADMOB_ANDROID_BANNER_ID` and `VITE_ADMOB_IOS_BANNER_ID`. The native app id and the app id in `src/config/ads.ts` must match.
+
+### Debug ads versus live ads
+
+The app id in the manifest is always the live app id. The banner **unit** changes:
+
+| Situation | Banner unit |
+| --- | --- |
+| Android `assembleDebug`, Xcode Debug, or `npm run dev` | Google’s sample banner units (`ca-app-pub-3940256099942544/6300978111` on Android, `ca-app-pub-3940256099942544/2934735716` on iOS) |
+| Android `bundleRelease`, Xcode Release, store builds | Live Dashboard banner units |
+| Hidden Settings switch **Developer: test ads are on** | Google’s sample units, even on a release install |
+| `VITE_ADMOB_FORCE_TEST_ADS=true` at build time | Google’s sample units for that whole build |
+
+Android writes `admob-mode.json` from `android/app/src/debug` and `src/release`. The iOS target writes the same file from the Debug or Release configuration. A missing file is treated as a release request.
+
+`VITE_ADMOB_TEST_DEVICE_IDS` (comma-separated) is passed to `AdMob.initialize({ testingDevices, initializeForTesting: true })`. Those devices get test creatives from AdMob even if the request uses a live unit. Leave it unset for Play production and App Store builds. The same list is available to the UMP debug request, together with `VITE_ADMOB_DEBUG_GEOGRAPHY`, which must stay off for store builds.
+
+Do not click a live ad on a release build. Use a debug install, turn on **Developer: test ads**, or register the handset as a test device.
+
+`Info.plist` also has `NSUserTrackingUsageDescription`, `GADDelayAppMeasurementInit`, and the SKAdNetwork list Google published on 30 January 2026. Play Console must say **Contains ads**. The merged manifest includes `com.google.android.gms.permission.AD_ID`.
+
+### app-ads.txt
+
+Deploy `public/app-ads.txt` so this exact line is the body of [https://deyeview.onrender.com/app-ads.txt](https://deyeview.onrender.com/app-ads.txt):
+
+```
+google.com, pub-7582636626157081, DIRECT, f08c47fec0942fa0
+```
+
+AdMob checks the developer website root. A path such as `/privacy/app-ads.txt` does not count. In AdMob, set that URL and wait until the file verifies. Publish a GDPR message and an iOS IDFA message under Privacy & messaging so the in-app consent form has something to show.
+
+Play: set **Contains ads** to yes, complete the Data Safety rows in the table above, and answer the advertising ID question as yes (the app uses the advertising ID, and users can opt out of personalized ads). App Store: complete App Privacy as in the table above, and do not claim that you do not track if ATT is requested.
+
+### Ads on or off
+
+`adsEnabled` defaults to true and is stored on the device (`deyeview.ads.v1`). Settings shows **Remove ads (Pro — coming soon)** and does not start a purchase. Tap the version line at the bottom of Settings seven times to reveal **Developer: ads are on / off** and **Developer: test ads are on / off**. The first writes `adsEnabled`. The second writes `forceTestAds` and forces Google’s sample banner units on that device. A later in-app purchase should set `adsEnabled` to false and leave the rest of the dashboard alone.
 
 ## Build locally
 

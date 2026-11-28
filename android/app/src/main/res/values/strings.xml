@@ -4,4 +4,6 @@
     <string name="title_activity_main">DeyeView</string>
     <string name="package_name">com.deyeview.app</string>
     <string name="custom_url_scheme">com.deyeview.app</string>
+    <!-- Live DeyeView Android app id. npm run build rewrites this from src/config/ads.ts or VITE_ADMOB_ANDROID_APP_ID. -->
+    <string name="admob_app_id">ca-app-pub-7582636626157081~3112060012</string>
 </resources>

@@ -13,4 +13,7 @@ ext {
     androidxJunitVersion = '1.2.1'
     androidxEspressoCoreVersion = '3.6.1'
     cordovaAndroidVersion = '10.1.1'
+    // Pinned so CI does not float the AdMob SDK. Match @capacitor-community/admob 7.2 defaults.
+    playServicesAdsVersion = '24.7.0'
+    userMessagingPlatformVersion = '3.1.0'
 }

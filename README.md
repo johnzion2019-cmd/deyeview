@@ -26,7 +26,7 @@ npx cap sync
 
 ## Native plugins
 
-Preferences, Status Bar, Splash Screen, Haptics, Filesystem, and Share are used for the saved plant, the status bar, launch, taps, and the CSV share sheet. `CapacitorHttp` is enabled so release builds are not blocked by browser CORS. On the web, `/deye-eu`, `/deye-us`, and `/meteo` proxy to Deye and Open-Meteo.
+Preferences, Status Bar, Splash Screen, Haptics, Filesystem, and Share are used for the saved plant, the status bar, launch, taps, and the CSV share sheet. `@capacitor-community/admob` shows one adaptive banner on the native dashboard, after Google UMP consent and, on iOS, App Tracking Transparency. Ids live in `src/config/ads.ts`. Release builds use the live Dashboard banner units. Debug builds, the hidden test-ads switch, and `VITE_ADMOB_FORCE_TEST_ADS` use Google's sample banner units. `CapacitorHttp` is enabled so release builds are not blocked by browser CORS. On the web, `/deye-eu`, `/deye-us`, and `/meteo` proxy to Deye and Open-Meteo. The web preview does not load ads.
 
 ## Store pages
 

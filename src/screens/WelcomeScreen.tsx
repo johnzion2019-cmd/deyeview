@@ -24,7 +24,7 @@ export function WelcomeScreen({ onConnect, onDemo }: { onConnect: () => void; on
             Try Live Demo
           </Button>
         </div>
-        <p className="mt-4 text-center text-xs text-muted">Free at launch · No ads · No account to create</p>
+        <p className="mt-4 text-center text-xs text-muted">Free · A banner ad on the phone dashboard · No DeyeView account</p>
       </div>
     </div>
   );

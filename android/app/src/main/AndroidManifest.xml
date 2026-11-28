@@ -25,6 +25,16 @@
 
         </activity>
 
+        <!-- AdMob app id. The value is the live Android app id in strings.xml (admob_app_id).
+             npm run build keeps it aligned with src/config/ads.ts. Debug builds still request Google's sample banner units. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="@string/admob_app_id" />
+        <!-- Do not measure the app until the Mobile Ads SDK is initialized after consent. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.DELAY_APP_MEASUREMENT_INIT"
+            android:value="true" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -39,4 +49,6 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Advertising ID. The Google Mobile Ads SDK also merges this permission. -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
 </manifest>
