@@ -1,5 +1,6 @@
 import { deyePasswordField } from "@/domain/password";
 import { zonedParts } from "@/domain/time";
+import { stringPowerWatts } from "@/domain/pv-strings";
 import type { EnergyTotals, GridStatus, Sample, StoredToken } from "@/domain/types";
 
 /**
@@ -118,6 +119,48 @@ const KEY_MAP: Record<string, string> = {
   gridstatus: "gridStatus",
   offgrid: "offGrid",
 };
+
+function registerPvStringKeys(map: Record<string, string>): void {
+  for (const n of [1, 2, 3] as const) {
+    for (const alias of [
+      `pv${n}power`,
+      `powerpv${n}`,
+      `dcpowerpv${n}`,
+      `dcpv${n}power`,
+      `pv${n}inputpower`,
+      `pv${n}dcpower`,
+      `dcpower${n}`,
+      `ppv${n}`,
+    ]) {
+      map[alias] = `pv${n}W`;
+    }
+    for (const alias of [
+      `pv${n}voltage`,
+      `dcvoltagepv${n}`,
+      `voltagepv${n}`,
+      `dcpv${n}voltage`,
+      `vpv${n}`,
+    ]) {
+      map[alias] = `pv${n}V`;
+    }
+    for (const alias of [
+      `pv${n}current`,
+      `dccurrentpv${n}`,
+      `currentpv${n}`,
+      `dcpv${n}current`,
+      `ipv${n}`,
+    ]) {
+      map[alias] = `pv${n}A`;
+    }
+  }
+}
+
+registerPvStringKeys(KEY_MAP);
+
+function mappedNum(mapped: Record<string, number | string | null>, key: string): number | null {
+  return typeof mapped[key] === "number" ? mapped[key] : null;
+}
+
 
 const MODE_LABELS: Record<string, string> = {
   manual: "Manual Mode",
@@ -368,6 +411,15 @@ export function sampleFromDeye(deviceBody: unknown, stationBody: unknown, fallba
     ts: epochMs(collection ?? updated, fallbackTs),
     source: "deye",
     pvW,
+    pv1V: mappedNum(mapped, "pv1V"),
+    pv1A: mappedNum(mapped, "pv1A"),
+    pv1W: stringPowerWatts(mappedNum(mapped, "pv1W"), mappedNum(mapped, "pv1V"), mappedNum(mapped, "pv1A")),
+    pv2V: mappedNum(mapped, "pv2V"),
+    pv2A: mappedNum(mapped, "pv2A"),
+    pv2W: stringPowerWatts(mappedNum(mapped, "pv2W"), mappedNum(mapped, "pv2V"), mappedNum(mapped, "pv2A")),
+    pv3V: mappedNum(mapped, "pv3V"),
+    pv3A: mappedNum(mapped, "pv3A"),
+    pv3W: stringPowerWatts(mappedNum(mapped, "pv3W"), mappedNum(mapped, "pv3V"), mappedNum(mapped, "pv3A")),
     loadW,
     gridW,
     gridStatus: gridStatusFrom(mapped, loadW, acV, gridW, acHz),

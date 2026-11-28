@@ -8,6 +8,15 @@ export type Sample = {
   ts: number;
   source: SampleSource;
   pvW: number;
+  pv1V: number | null;
+  pv1A: number | null;
+  pv1W: number | null;
+  pv2V: number | null;
+  pv2A: number | null;
+  pv2W: number | null;
+  pv3V: number | null;
+  pv3A: number | null;
+  pv3W: number | null;
   loadW: number;
   gridW: number;
   gridStatus: GridStatus;

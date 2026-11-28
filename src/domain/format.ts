@@ -1,5 +1,9 @@
 import { currencyByCode } from "@/domain/currencies";
 
+export function formatKw(watts: number): string {
+  return `${(watts / 1000).toFixed(2)} kW`;
+}
+
 export function formatPower(watts: number): string {
   const magnitude = Math.abs(watts);
   const sign = watts < 0 ? "-" : "";

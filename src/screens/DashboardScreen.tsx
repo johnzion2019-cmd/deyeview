@@ -4,7 +4,8 @@ import { DashboardAdBanner } from "@/components/DashboardAdBanner";
 import { EnergyFlow } from "@/components/EnergyFlow";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { formatBatteryPower } from "@/domain/battery";
-import { formatKwh, formatMoney } from "@/domain/format";
+import { formatKw, formatKwh, formatMoney } from "@/domain/format";
+import { pvStringsFromSample } from "@/domain/pv-strings";
 import { paybackProgressLabel } from "@/domain/payback";
 import type { PlantProfile, SceneMode } from "@/domain/types";
 import { csvFilename, buildEarningsCsv } from "@/domain/csv";
@@ -88,6 +89,7 @@ export function DashboardScreen({
           {model ? (
             <>
               <EnergyFlow sample={model.sample} hero={model.hero} scene={profile.scene} photo={profile.housePhoto} showcase={model.showcase} onScene={(scene) => void setScene(scene)} />
+              <SolarStrings sample={model.sample} />
               <section className="rounded-3xl bg-panel p-4 ring-1 ring-white/10">
                 <div className="flex items-center gap-4">
                   <div
@@ -228,5 +230,26 @@ function ForecastDay({ title, label, kwh, temp }: { title: string; label: string
         {temp != null ? ` · ${Math.round(temp)}°C` : ""}
       </p>
     </div>
+  );
+}
+
+function SolarStrings({ sample }: { sample: import("@/domain/types").Sample }) {
+  const strings = pvStringsFromSample(sample);
+  if (strings.length === 0) return null;
+  return (
+    <section className="rounded-3xl bg-panel p-4 ring-1 ring-white/10">
+      <h2 className="mb-3 text-xs uppercase tracking-[0.14em] text-muted">Solar Strings</h2>
+      <div className={`grid gap-3 ${strings.length >= 3 ? "grid-cols-3" : "grid-cols-2"}`}>
+        {strings.map((row) => (
+          <div key={row.name} className="rounded-2xl bg-black/25 p-3">
+            <div className="text-xs text-muted">{row.name}</div>
+            <div className="font-display text-xl tabular-nums">{row.watts != null ? formatKw(row.watts) : "—"}</div>
+            <div className="text-[11px] text-muted">
+              {row.volts != null ? `${row.volts.toFixed(1)} V` : "—"} · {row.amps != null ? `${row.amps.toFixed(2)} A` : "—"}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }

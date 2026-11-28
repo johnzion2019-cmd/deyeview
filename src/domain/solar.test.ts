@@ -5,6 +5,8 @@ import { batteryFlowState, estimateBatteryRuntime, formatBatteryChip, formatBatt
 import { buildEarningsCsv, csvFilename } from "@/domain/csv";
 import { chooseDemoClock, pvPowerW, type SimConfig } from "@/domain/demo";
 import { DeyeClient, dailyEnergyFromDeye, mapMeasurePoints, parseStationHistory, resolveDeyeBaseUrl, sampleFromDeye, stationDailyHistoryRange } from "@/domain/deye";
+import { formatKw } from "@/domain/format";
+import { hasPvStringData, pvStringsFromSample, stringPowerWatts } from "@/domain/pv-strings";
 import { buildEarningsReport, dayEarnings, selfSuppliedKwh } from "@/domain/earnings";
 import { estimateGenerationKwh } from "@/domain/forecast";
 import { formatMoney } from "@/domain/format";
@@ -240,6 +242,62 @@ describe("demo sun and Deye parsing", () => {
     expect(() => resolveDeyeBaseUrl("custom", "http://eu1-developer.deyecloud.com")).toThrow(/https/);
     expect(() => resolveDeyeBaseUrl("custom", "https://127.0.0.1/v1.0")).toThrow(/public/);
   });
+
+
+  it("maps DC Power PV keys and falls back to V × A for string watts", () => {
+    const official = sampleFromDeye(
+      {
+        deviceDataList: [
+          {
+            dataList: [
+              { key: "DC Voltage PV1", value: "328.0" },
+              { key: "DC Current PV1", value: "10.50" },
+              { key: "DC Power PV1", value: "3500" },
+              { key: "DC Voltage PV2", value: "325.4" },
+              { key: "DC Current PV2", value: "10.40" },
+              { key: "DC Voltage PV3", value: "321.0" },
+              { key: "DC Current PV3", value: "18.20" },
+              { key: "DC Power PV3", value: "5842" },
+              { key: "TotalSolarPower", value: "12674" },
+            ],
+          },
+        ],
+      },
+      null,
+    );
+    expect(official.pv1W).toBe(3500);
+    expect(official.pv2W).toBeCloseTo(325.4 * 10.4);
+    expect(official.pv3W).toBe(5842);
+
+    const computed = sampleFromDeye(
+      {
+        deviceDataList: [
+          {
+            dataList: [
+              { key: "PV1Voltage", value: "328.0" },
+              { key: "PV1Current", value: "10.50" },
+              { key: "PV2Voltage", value: "325.4" },
+              { key: "PV2Current", value: "10.40" },
+              { key: "PV3Voltage", value: "0" },
+              { key: "PV3Current", value: "0" },
+            ],
+          },
+        ],
+      },
+      null,
+    );
+    expect(computed.pv1W).toBeCloseTo(3444);
+    expect(computed.pv2W).toBeCloseTo(3384.16);
+    expect(computed.pv3W).toBe(0);
+    expect(formatKw(computed.pv1W!)).toBe("3.44 kW");
+    expect(formatKw(0)).toBe("0.00 kW");
+    expect(pvStringsFromSample(computed).map((row) => row.name)).toEqual(["PV1", "PV2", "PV3"]);
+    expect(hasPvStringData(0, 0, 0)).toBe(true);
+    expect(hasPvStringData(null, null, null)).toBe(false);
+    expect(stringPowerWatts(null, 328.0, 10.5)).toBeCloseTo(3444);
+    expect(stringPowerWatts(3500, 328.0, 10.5)).toBe(3500);
+  });
+
 
 
   it("prefers DailyActiveProduction for today's PV and ignores lifetime consumption", () => {

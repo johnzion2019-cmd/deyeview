@@ -126,11 +126,27 @@ export function simulateStep(ts: number, socIn: number, dtHours: number, cfg: Si
   const batteryV = 49.2 + (nextSoc / 100) * 5.4;
   const acV = 229.4 + hash01(Math.floor(ts / 60_000)) * 1.6;
   const acHz = cfg.nominalHz + (hash01(Math.floor(ts / 30_000)) - 0.5) * 0.04;
+  const irr = cfg.ratedW > 0 ? Math.min(1, pvW / cfg.ratedW) : 0;
+  const pv1W = pvW * 0.40;
+  const pv2W = pvW * 0.32;
+  const pv3W = pvW * 0.28;
+  const pv1V = pvW < 8 ? 0 : 286 + irr * 92;
+  const pv2V = pvW < 8 ? 0 : 280 + irr * 90;
+  const pv3V = pvW < 8 ? 0 : 275 + irr * 88;
 
   const sample: Sample = {
     ts,
     source: "demo",
     pvW,
+    pv1V,
+    pv1A: pv1V > 0 ? pv1W / pv1V : 0,
+    pv1W,
+    pv2V,
+    pv2A: pv2V > 0 ? pv2W / pv2V : 0,
+    pv2W,
+    pv3V,
+    pv3A: pv3V > 0 ? pv3W / pv3V : 0,
+    pv3W,
     loadW,
     gridW,
     gridStatus: "on-grid",
