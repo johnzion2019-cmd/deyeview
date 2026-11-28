@@ -4,7 +4,7 @@ import { ADS_DEV_TOGGLE_TAPS } from "@/config/ads";
 import { isProEnabled } from "@/features/pro/flags";
 import { profileHasCredentials } from "@/domain/profile";
 import type { PlantProfile } from "@/domain/types";
-import { loadAdsPreference, openAdPrivacyChoices, saveAdsPreference } from "@/platform/ads";
+import { loadAdsPreference, openAdPrivacyChoices, resetAdvertisingSession, saveAdsPreference } from "@/platform/ads";
 import { haptic } from "@/platform/native";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -25,6 +25,7 @@ export function SettingsScreen({
   const [confirm, setConfirm] = useState(false);
   const [clearing, setClearing] = useState(false);
   const [adsEnabled, setAdsEnabled] = useState(true);
+  const [forceTestAds, setForceTestAds] = useState(false);
   const [devAds, setDevAds] = useState(false);
   const [openingChoices, setOpeningChoices] = useState(false);
   const [adChoiceNote, setAdChoiceNote] = useState<string | null>(null);
@@ -34,7 +35,9 @@ export function SettingsScreen({
   useEffect(() => {
     let alive = true;
     void loadAdsPreference().then((preference) => {
-      if (alive) setAdsEnabled(preference.adsEnabled);
+      if (!alive) return;
+      setAdsEnabled(preference.adsEnabled);
+      setForceTestAds(preference.forceTestAds);
     });
     return () => {
       alive = false;
@@ -54,7 +57,15 @@ export function SettingsScreen({
   async function toggleDeveloperAds() {
     const next = !adsEnabled;
     setAdsEnabled(next);
-    await saveAdsPreference({ adsEnabled: next });
+    await saveAdsPreference({ adsEnabled: next, forceTestAds });
+    await haptic("light");
+  }
+
+  async function toggleForceTestAds() {
+    const next = !forceTestAds;
+    setForceTestAds(next);
+    await saveAdsPreference({ adsEnabled, forceTestAds: next });
+    resetAdvertisingSession();
     await haptic("light");
   }
 
@@ -123,7 +134,12 @@ export function SettingsScreen({
               <Button variant="secondary" className="w-full" onClick={() => void toggleDeveloperAds()}>
                 {adsEnabled ? "Developer: ads are on" : "Developer: ads are off"}
               </Button>
-              <p className="text-xs leading-relaxed text-muted">Hidden switch for this device only. It writes adsEnabled and is not a purchase.</p>
+              <Button variant="secondary" className="w-full" onClick={() => void toggleForceTestAds()}>
+                {forceTestAds ? "Developer: test ads are on" : "Developer: test ads are off"}
+              </Button>
+              <p className="text-xs leading-relaxed text-muted">
+                Hidden switches for this device only. Ads on/off writes adsEnabled and is not a purchase. Test ads forces Google’s sample banner units so a release install does not request a live ad.
+              </p>
             </div>
           ) : null}
           <LegalLink href="/privacy.html" title="Privacy Policy" />

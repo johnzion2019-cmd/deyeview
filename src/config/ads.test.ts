@@ -1,7 +1,10 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
-  GOOGLE_TEST_APP_IDS,
+  ADMOB_PUBLISHER_ID,
   GOOGLE_TEST_BANNER_IDS,
+  PRODUCTION_APP_IDS,
+  PRODUCTION_BANNER_IDS,
   adsPlatform,
   bannerAdUnitId,
   bannerReservePx,
@@ -10,40 +13,49 @@ import {
   resolveAdMobIds,
   serveNonPersonalizedAds,
   shouldShowDashboardBanner,
-  usesOfficialGoogleTestIds,
+  shouldUseGoogleTestUnits,
+  testDeviceIds,
 } from "@/config/ads";
 
-describe("AdMob test ids", () => {
-  it("uses Google's official sample app and banner ids", () => {
-    const ids = resolveAdMobIds({});
-    expect(ids).toEqual({
-      androidAppId: "ca-app-pub-3940256099942544~3347511713",
-      iosAppId: "ca-app-pub-3940256099942544~1458002511",
-      androidBannerId: "ca-app-pub-3940256099942544/6300978111",
-      iosBannerId: "ca-app-pub-3940256099942544/2934735716",
+describe("AdMob release ids", () => {
+  it("uses the live DeyeView app and dashboard banner ids", () => {
+    expect(resolveAdMobIds({})).toEqual({
+      androidAppId: "ca-app-pub-7582636626157081~3112060012",
+      iosAppId: "ca-app-pub-7582636626157081~3902397504",
+      androidBannerId: "ca-app-pub-7582636626157081/2423608964",
+      iosBannerId: "ca-app-pub-7582636626157081/8543836741",
     });
-    expect(ids.androidAppId).toBe(GOOGLE_TEST_APP_IDS.android);
-    expect(ids.iosBannerId).toBe(GOOGLE_TEST_BANNER_IDS.ios);
-    expect(usesOfficialGoogleTestIds(ids)).toBe(true);
+    expect(PRODUCTION_APP_IDS.android).toBe("ca-app-pub-7582636626157081~3112060012");
+    expect(PRODUCTION_BANNER_IDS.ios).toBe("ca-app-pub-7582636626157081/8543836741");
   });
 
-  it("lets a build-time env value replace one id and keeps the other test ids", () => {
+  it("lets a build-time env value replace one id and keeps the other live ids", () => {
     const ids = resolveAdMobIds({
       VITE_ADMOB_ANDROID_BANNER_ID: " ca-app-pub-100/200 ",
       VITE_ADMOB_IOS_APP_ID: "",
     });
     expect(ids.androidBannerId).toBe("ca-app-pub-100/200");
-    expect(ids.androidAppId).toBe(GOOGLE_TEST_APP_IDS.android);
-    expect(ids.iosAppId).toBe(GOOGLE_TEST_APP_IDS.ios);
-    expect(usesOfficialGoogleTestIds(ids)).toBe(false);
+    expect(ids.androidAppId).toBe(PRODUCTION_APP_IDS.android);
+    expect(ids.iosAppId).toBe(PRODUCTION_APP_IDS.ios);
   });
 
-  it("picks a platform banner unit and none for web", () => {
+  it("requests Google sample banner units only when a test flag is on", () => {
     const ids = resolveAdMobIds({});
-    expect(bannerAdUnitId("android", ids)).toBe(GOOGLE_TEST_BANNER_IDS.android);
-    expect(bannerAdUnitId("ios", ids)).toBe(GOOGLE_TEST_BANNER_IDS.ios);
-    expect(bannerAdUnitId("web", ids)).toBeNull();
+    expect(bannerAdUnitId("android", { ids })).toBe(PRODUCTION_BANNER_IDS.android);
+    expect(bannerAdUnitId("ios", { ids, useTestUnits: true })).toBe(GOOGLE_TEST_BANNER_IDS.ios);
+    expect(bannerAdUnitId("android", { ids, useTestUnits: true })).toBe(GOOGLE_TEST_BANNER_IDS.android);
+    expect(bannerAdUnitId("web", { ids, useTestUnits: true })).toBeNull();
     expect(adsPlatform("electron")).toBe("web");
+    expect(shouldUseGoogleTestUnits({ devServer: false, nativeDebug: false, forceTestAds: false, forceTestAdsFromEnv: false })).toBe(false);
+    expect(shouldUseGoogleTestUnits({ devServer: false, nativeDebug: true, forceTestAds: false, forceTestAdsFromEnv: false })).toBe(true);
+    expect(shouldUseGoogleTestUnits({ devServer: true, nativeDebug: false, forceTestAds: false, forceTestAdsFromEnv: false })).toBe(true);
+    expect(shouldUseGoogleTestUnits({ devServer: false, nativeDebug: false, forceTestAds: true, forceTestAdsFromEnv: false })).toBe(true);
+    expect(shouldUseGoogleTestUnits({ devServer: false, nativeDebug: false, forceTestAds: false, forceTestAdsFromEnv: true })).toBe(true);
+  });
+
+  it("publishes the AdMob app-ads.txt line for the developer site root", () => {
+    const file = readFileSync(new URL("../../public/app-ads.txt", import.meta.url), "utf8");
+    expect(file).toBe(`google.com, ${ADMOB_PUBLISHER_ID}, DIRECT, f08c47fec0942fa0\n`);
   });
 });
 
@@ -74,13 +86,15 @@ describe("dashboard banner policy", () => {
 
 describe("ads preference", () => {
   it("defaults to ads on and keeps an explicit off switch", () => {
-    expect(normalizeAdsPreference(null)).toEqual({ adsEnabled: true });
-    expect(normalizeAdsPreference({})).toEqual({ adsEnabled: true });
-    expect(normalizeAdsPreference({ adsEnabled: false })).toEqual({ adsEnabled: false });
-    expect(normalizeAdsPreference({ adsEnabled: "no" })).toEqual({ adsEnabled: true });
+    expect(normalizeAdsPreference(null)).toEqual({ adsEnabled: true, forceTestAds: false });
+    expect(normalizeAdsPreference({})).toEqual({ adsEnabled: true, forceTestAds: false });
+    expect(normalizeAdsPreference({ adsEnabled: false })).toEqual({ adsEnabled: false, forceTestAds: false });
+    expect(normalizeAdsPreference({ adsEnabled: "no", forceTestAds: true })).toEqual({ adsEnabled: true, forceTestAds: true });
   });
 
-  it("reads an optional consent debug override", () => {
+  it("reads test device ids and an optional consent debug override", () => {
+    expect(testDeviceIds({})).toEqual([]);
+    expect(testDeviceIds({ VITE_ADMOB_TEST_DEVICE_IDS: " abc , def " })).toEqual(["abc", "def"]);
     expect(consentDebugOverride({})).toBeUndefined();
     expect(consentDebugOverride({ VITE_ADMOB_DEBUG_GEOGRAPHY: "eea", VITE_ADMOB_TEST_DEVICE_IDS: " abc , def " })).toEqual({
       geography: "EEA",

@@ -1,10 +1,10 @@
 /**
- * Copies VITE_ADMOB_ANDROID_APP_ID / VITE_ADMOB_IOS_APP_ID into the native projects
- * when those variables are set. Banner units are read from src/config/ads.ts at build time
- * and are not stored in the manifests.
+ * Writes the AdMob app ids into the native projects.
+ * Defaults come from PRODUCTION_APP_IDS in src/config/ads.ts.
+ * VITE_ADMOB_ANDROID_APP_ID and VITE_ADMOB_IOS_APP_ID replace those defaults.
+ * Banner units stay in the web bundle; debug versus release is chosen at runtime.
  *
- * Unset variables leave Google's official test app ids in place.
- * `npm run build` runs this before Vite so a store build and the JS bundle stay aligned.
+ * `npm run build` runs this before Vite so the manifest and the JS bundle stay aligned.
  */
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -59,28 +59,33 @@ function replaceOnce(file, pattern, replacement, label) {
   if (after !== before) writeFileSync(file, after);
 }
 
+function productionAppIds() {
+  const source = readFileSync(path.join(root, "src/config/ads.ts"), "utf8");
+  const block = source.match(/export const PRODUCTION_APP_IDS = \{([\s\S]*?)\} as const/);
+  if (!block) throw new Error("PRODUCTION_APP_IDS is missing from src/config/ads.ts");
+  function field(name) {
+    const match = block[1].match(new RegExp(`${name}:\\s*"([^"]+)"`));
+    if (!match) throw new Error(`PRODUCTION_APP_IDS.${name} is missing from src/config/ads.ts`);
+    return match[1];
+  }
+  return { android: field("android"), ios: field("ios") };
+}
+
+const defaults = productionAppIds();
 const env = loadBuildEnv();
-const android = env.VITE_ADMOB_ANDROID_APP_ID?.trim();
-const ios = env.VITE_ADMOB_IOS_APP_ID?.trim();
+const android = requireAppId("Android app id", env.VITE_ADMOB_ANDROID_APP_ID?.trim() || defaults.android);
+const ios = requireAppId("iOS app id", env.VITE_ADMOB_IOS_APP_ID?.trim() || defaults.ios);
 
-if (android) {
-  const id = requireAppId("VITE_ADMOB_ANDROID_APP_ID", android);
-  replaceOnce(
-    path.join(root, "android/app/src/main/res/values/strings.xml"),
-    /(<string name="admob_app_id">)[^<]*(<\/string>)/,
-    `$1${id}$2`,
-    "admob_app_id",
-  );
-  console.log("AdMob Android app id updated from VITE_ADMOB_ANDROID_APP_ID");
-}
-
-if (ios) {
-  const id = requireAppId("VITE_ADMOB_IOS_APP_ID", ios);
-  replaceOnce(
-    path.join(root, "ios/App/App/Info.plist"),
-    /(<key>GADApplicationIdentifier<\/key>\s*<string>)[^<]*(<\/string>)/,
-    `$1${id}$2`,
-    "GADApplicationIdentifier",
-  );
-  console.log("AdMob iOS app id updated from VITE_ADMOB_IOS_APP_ID");
-}
+replaceOnce(
+  path.join(root, "android/app/src/main/res/values/strings.xml"),
+  /(<string name="admob_app_id">)[^<]*(<\/string>)/,
+  `$1${android}$2`,
+  "admob_app_id",
+);
+replaceOnce(
+  path.join(root, "ios/App/App/Info.plist"),
+  /(<key>GADApplicationIdentifier<\/key>\s*<string>)[^<]*(<\/string>)/,
+  `$1${ios}$2`,
+  "GADApplicationIdentifier",
+);
+console.log("AdMob app ids written to Android strings.xml and iOS Info.plist");

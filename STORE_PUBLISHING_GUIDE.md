@@ -11,7 +11,7 @@ Host these files at stable HTTPS URLs and paste those URLs into both consoles:
 | Support | `public/support.html` | `/support.html` |
 | app-ads.txt | `public/app-ads.txt` | `https://deyeview.onrender.com/app-ads.txt` |
 
-Google’s data-deletion URL can be the privacy page anchor `/privacy.html#delete`. The same steps are on the support page. `app-ads.txt` must be served at the site root, not under a subpath. The file in this repo is a placeholder until an AdMob publisher id exists.
+Google’s data-deletion URL can be the privacy page anchor `/privacy.html#delete`. The same steps are on the support page. `app-ads.txt` must be served at the developer website root, [https://deyeview.onrender.com/app-ads.txt](https://deyeview.onrender.com/app-ads.txt), not under a subpath. The committed file is the live AdMob line for publisher `pub-7582636626157081`.
 
 ## Reviewer path (both stores)
 
@@ -174,7 +174,7 @@ Photo library: the connect flow can set a house photo. `NSPhotoLibraryUsageDescr
 
 Paste:
 
-> No inverter is required. On the welcome screen tap Try Live Demo. Every feature works, including CSV share and Settings → Disconnect & Clear Local Data. A Google test banner may appear at the bottom of the dashboard only. It is not on the welcome screen or in Settings. Settings → Privacy & ad choices reopens Google’s consent form when one is available. Demo Mode · Connect Inverter opens the real Deye Cloud form for owners; reviewers can ignore it. DeyeView does not have a username we can issue. The app is an independent client of the customer’s own Deye Cloud account and is not affiliated with Deye. Ads in this build use Google’s official test ids until an AdMob account is created.
+> No inverter is required. On the welcome screen tap Try Live Demo. Every feature works, including CSV share and Settings → Disconnect & Clear Local Data. A banner may appear at the bottom of the dashboard only. It is not on the welcome screen or in Settings. Debug installs show a Google test ad. Release installs request the live Dashboard banner. Settings → Privacy & ad choices reopens Google’s consent form when one is available. Demo Mode · Connect Inverter opens the real Deye Cloud form for owners; reviewers can ignore it. DeyeView does not have a username we can issue. The app is an independent client of the customer’s own Deye Cloud account and is not affiliated with Deye.
 
 Sign in with a development Apple ID, enable automatic signing for the App target, archive in Xcode (Any iOS Device), and upload with the Organizer or `xcodebuild -exportArchive`. The GitHub workflow `.github/workflows/ios-build.yml` produces an unsigned Release build on a macOS runner so the project compiles before you attach a team.
 
@@ -188,32 +188,52 @@ Sign in with a development Apple ID, enable automatic signing for the App target
 
 ## AdMob
 
-The phone builds ship with Google’s official **test** ids so a banner can be tried before an AdMob account exists. Test ads are labeled “Test Ad” and do not earn. Web preview, the welcome screen, and Settings never request an ad.
+Publisher `pub-7582636626157081`. Both native apps are `com.deyeview.app`. The live banner ad unit on each platform is named **Dashboard banner**. Web preview, the welcome screen, and Settings never request an ad.
 
-| Slot | Where it lives today | Google test value |
+| Slot | Where it lives | Release value |
 | --- | --- | --- |
-| Android app id | `android/app/src/main/res/values/strings.xml` (`admob_app_id`), referenced from `AndroidManifest.xml` | `ca-app-pub-3940256099942544~3347511713` |
-| iOS app id | `ios/App/App/Info.plist` `GADApplicationIdentifier` | `ca-app-pub-3940256099942544~1458002511` |
-| Android banner | `src/config/ads.ts` | `ca-app-pub-3940256099942544/6300978111` |
-| iOS banner | `src/config/ads.ts` | `ca-app-pub-3940256099942544/2934735716` |
+| Android app id | `src/config/ads.ts`, copied into `android/app/src/main/res/values/strings.xml` (`admob_app_id`) and referenced from `AndroidManifest.xml` | `ca-app-pub-7582636626157081~3112060012` |
+| iOS app id | `src/config/ads.ts`, copied into `ios/App/App/Info.plist` `GADApplicationIdentifier` | `ca-app-pub-7582636626157081~3902397504` |
+| Android banner | `src/config/ads.ts` | `ca-app-pub-7582636626157081/2423608964` |
+| iOS banner | `src/config/ads.ts` | `ca-app-pub-7582636626157081/8543836741` |
+| app-ads.txt | `public/app-ads.txt`, served at the site root | `google.com, pub-7582636626157081, DIRECT, f08c47fec0942fa0` |
+
+`npm run build` writes the app ids from `PRODUCTION_APP_IDS` unless `VITE_ADMOB_ANDROID_APP_ID` or `VITE_ADMOB_IOS_APP_ID` is set. Banner overrides are `VITE_ADMOB_ANDROID_BANNER_ID` and `VITE_ADMOB_IOS_BANNER_ID`. The native app id and the app id in `src/config/ads.ts` must match.
+
+### Debug ads versus live ads
+
+The app id in the manifest is always the live app id. The banner **unit** changes:
+
+| Situation | Banner unit |
+| --- | --- |
+| Android `assembleDebug`, Xcode Debug, or `npm run dev` | Google’s sample banner units (`ca-app-pub-3940256099942544/6300978111` on Android, `ca-app-pub-3940256099942544/2934735716` on iOS) |
+| Android `bundleRelease`, Xcode Release, store builds | Live Dashboard banner units |
+| Hidden Settings switch **Developer: test ads are on** | Google’s sample units, even on a release install |
+| `VITE_ADMOB_FORCE_TEST_ADS=true` at build time | Google’s sample units for that whole build |
+
+Android writes `admob-mode.json` from `android/app/src/debug` and `src/release`. The iOS target writes the same file from the Debug or Release configuration. A missing file is treated as a release request.
+
+`VITE_ADMOB_TEST_DEVICE_IDS` (comma-separated) is passed to `AdMob.initialize({ testingDevices, initializeForTesting: true })`. Those devices get test creatives from AdMob even if the request uses a live unit. Leave it unset for Play production and App Store builds. The same list is available to the UMP debug request, together with `VITE_ADMOB_DEBUG_GEOGRAPHY`, which must stay off for store builds.
+
+Do not click a live ad on a release build. Use a debug install, turn on **Developer: test ads**, or register the handset as a test device.
 
 `Info.plist` also has `NSUserTrackingUsageDescription`, `GADDelayAppMeasurementInit`, and the SKAdNetwork list Google published on 30 January 2026. Play Console must say **Contains ads**. The merged manifest includes `com.google.android.gms.permission.AD_ID`.
 
-### Create the account and swap in real ids
+### app-ads.txt
 
-1. Sign in at [admob.google.com](https://admob.google.com) and create an account. Add two apps with package / bundle id `com.deyeview.app`, one Android and one iOS. Copy each **app id** (`ca-app-pub-…~…`).
-2. Create one **banner** ad unit per app. Copy each **ad unit id** (`ca-app-pub-…/…`).
-3. In AdMob, open Privacy & messaging and publish a GDPR message, and an IDFA message for iOS. Until those exist, the consent form has nothing to show. The app still calls UMP before loading an ad.
-4. Paste the ids into `src/config/ads.ts`, or leave that file on the test constants and set `VITE_ADMOB_ANDROID_APP_ID`, `VITE_ADMOB_IOS_APP_ID`, `VITE_ADMOB_ANDROID_BANNER_ID`, and `VITE_ADMOB_IOS_BANNER_ID` (see `.env.example`). Do not commit the filled `.env`.
-5. Run `npm run build` then `npx cap sync`. The build script copies the two app ids into `strings.xml` and `Info.plist`. Banner ids are compiled into the web bundle from `src/config/ads.ts`. The native app id and the id in config must match.
-6. In AdMob, copy the app-ads.txt line (`google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0`). Replace `public/app-ads.txt` with that single line and deploy the site so it is available at [https://deyeview.onrender.com/app-ads.txt](https://deyeview.onrender.com/app-ads.txt). Enter that URL in AdMob and wait until the file verifies.
-7. Ship a build that no longer uses the sample ids. Sample ids are fine for closed testing. They must not be the production ad units after the account is approved.
+Deploy `public/app-ads.txt` so this exact line is the body of [https://deyeview.onrender.com/app-ads.txt](https://deyeview.onrender.com/app-ads.txt):
+
+```
+google.com, pub-7582636626157081, DIRECT, f08c47fec0942fa0
+```
+
+AdMob checks the developer website root. A path such as `/privacy/app-ads.txt` does not count. In AdMob, set that URL and wait until the file verifies. Publish a GDPR message and an iOS IDFA message under Privacy & messaging so the in-app consent form has something to show.
 
 Play: set **Contains ads** to yes, complete the Data Safety rows in the table above, and answer the advertising ID question as yes (the app uses the advertising ID, and users can opt out of personalized ads). App Store: complete App Privacy as in the table above, and do not claim that you do not track if ATT is requested.
 
 ### Ads on or off
 
-`adsEnabled` defaults to true and is stored on the device (`deyeview.ads.v1`). Settings shows **Remove ads (Pro — coming soon)** and does not start a purchase. Tap the version line at the bottom of Settings seven times to reveal **Developer: ads are on / off**. That switch is the only way to write `adsEnabled` today. A later in-app purchase should set the same flag to false and leave the rest of the dashboard alone.
+`adsEnabled` defaults to true and is stored on the device (`deyeview.ads.v1`). Settings shows **Remove ads (Pro — coming soon)** and does not start a purchase. Tap the version line at the bottom of Settings seven times to reveal **Developer: ads are on / off** and **Developer: test ads are on / off**. The first writes `adsEnabled`. The second writes `forceTestAds` and forces Google’s sample banner units on that device. A later in-app purchase should set `adsEnabled` to false and leave the rest of the dashboard alone.
 
 ## Build locally
 

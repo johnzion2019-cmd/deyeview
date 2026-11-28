@@ -49,9 +49,9 @@
 	<string>DeyeView uses a photo you choose so your house can sit behind the energy flow. The picture stays on this device.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>DeyeView can use the camera to photograph your house for the energy flow background. The picture stays on this device.</string>
-	<!-- Google's official test app id. Paste the real iOS app id here, or set VITE_ADMOB_IOS_APP_ID. See src/config/ads.ts. -->
+	<!-- Live DeyeView iOS app id. npm run build rewrites this from src/config/ads.ts or VITE_ADMOB_IOS_APP_ID. -->
 	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-3940256099942544~1458002511</string>
+	<string>ca-app-pub-7582636626157081~3902397504</string>
 	<!-- Wait to start ad measurement until the app initializes the SDK after consent. -->
 	<key>GADDelayAppMeasurementInit</key>
 	<true/>

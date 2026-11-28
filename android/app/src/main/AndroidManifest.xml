@@ -25,9 +25,8 @@
 
         </activity>
 
-        <!-- AdMob. The value is Google's test app id until a real account exists.
-             Replace it in res/values/strings.xml (admob_app_id) or set VITE_ADMOB_ANDROID_APP_ID
-             and run npm run build. Keep it identical to src/config/ads.ts. -->
+        <!-- AdMob app id. The value is the live Android app id in strings.xml (admob_app_id).
+             npm run build keeps it aligned with src/config/ads.ts. Debug builds still request Google's sample banner units. -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="@string/admob_app_id" />

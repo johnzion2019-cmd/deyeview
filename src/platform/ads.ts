@@ -11,16 +11,18 @@ import {
 } from "@capacitor-community/admob";
 import { Preferences } from "@capacitor/preferences";
 import {
+  ADMOB_ENV,
   FALLBACK_BANNER_HEIGHT_PX,
   adsPlatform,
   bannerAdUnitId,
   bannerReservePx,
   consentDebugOverride,
+  envFlag,
   normalizeAdsPreference,
-  resolveAdMobIds,
   serveNonPersonalizedAds,
   shouldShowDashboardBanner,
-  usesOfficialGoogleTestIds,
+  shouldUseGoogleTestUnits,
+  testDeviceIds,
   type AdsPreference,
   type ConsentChoice,
   type TrackingChoice,
@@ -80,12 +82,12 @@ export function prepareAdvertising(): Promise<PreparedAds> {
 
 /**
  * UMP, then App Tracking Transparency on iOS, then the Mobile Ads SDK.
- * A failure never throws. Test ids still try a non-personalized banner when UMP
- * has no message yet (there is no AdMob account). Real ids stay off if consent cannot be read.
+ * A failure never throws. Sample banner units may still load if consent info
+ * cannot be fetched. A live unit stays off until consent can be read.
  */
 async function runPrepare(): Promise<PreparedAds> {
   const platform = adsPlatform(Capacitor.getPlatform());
-  const ids = resolveAdMobIds();
+  const useTestUnits = await requestUsesGoogleTestUnits();
   let consent: ConsentChoice = "UNKNOWN";
   let allowAds = false;
 
@@ -94,7 +96,7 @@ async function runPrepare(): Promise<PreparedAds> {
     consent = consentChoice(info.status);
     allowAds = info.canRequestAds === true;
   } catch {
-    allowAds = usesOfficialGoogleTestIds(ids);
+    allowAds = useTestUnits;
     consent = "UNKNOWN";
   }
 
@@ -110,7 +112,8 @@ async function runPrepare(): Promise<PreparedAds> {
   }
 
   try {
-    await AdMob.initialize();
+    const devices = testDeviceIds();
+    await AdMob.initialize(devices.length > 0 ? { testingDevices: devices, initializeForTesting: true } : undefined);
   } catch {
     return { canRequestAds: false, npa: true };
   }
@@ -119,6 +122,39 @@ async function runPrepare(): Promise<PreparedAds> {
     canRequestAds: true,
     npa: serveNonPersonalizedAds({ platform, tracking, consent }),
   };
+}
+
+/** Debug builds and the hidden test-ads switch never request the live banner unit. */
+export async function requestUsesGoogleTestUnits(): Promise<boolean> {
+  const preference = await loadAdsPreference();
+  const nativeDebug = await loadNativeDebugAds();
+  return shouldUseGoogleTestUnits({
+    devServer: import.meta.env.DEV,
+    nativeDebug,
+    forceTestAds: preference.forceTestAds,
+    forceTestAdsFromEnv: envFlag(import.meta.env, ADMOB_ENV.forceTestAds),
+  });
+}
+
+let nativeDebugAds: Promise<boolean> | null = null;
+
+/**
+ * `admob-mode.json` is written by the Android debug/release source sets and by the iOS
+ * build phase. Vite dev (`import.meta.env.DEV`) is always treated as debug.
+ */
+export function loadNativeDebugAds(): Promise<boolean> {
+  if (import.meta.env.DEV) return Promise.resolve(true);
+  nativeDebugAds ??= (async () => {
+    try {
+      const response = await fetch("admob-mode.json", { cache: "no-store" });
+      if (!response.ok) return false;
+      const body = (await response.json()) as { testAds?: unknown };
+      return body.testAds === true;
+    } catch {
+      return false;
+    }
+  })();
+  return nativeDebugAds;
 }
 
 function consentRequestOptions() {
@@ -242,7 +278,7 @@ export function startDashboardBanner(onHeight: (heightPx: number) => void): Bann
         publish(0);
         return;
       }
-      const adId = bannerAdUnitId(platform);
+      const adId = bannerAdUnitId(platform, { useTestUnits: await requestUsesGoogleTestUnits() });
       if (!adId) {
         publish(0);
         return;
